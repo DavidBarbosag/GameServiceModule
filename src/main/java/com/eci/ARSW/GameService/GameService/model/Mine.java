@@ -5,7 +5,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "mines")
 public class Mine implements GameElement {
     private Position position;
-    private char state; // E = Enabled, U = Used, D = Deactivated
+    private char state; // E = Enabled, F = flagged, D = Deactivated
 
     public Mine() {}
 

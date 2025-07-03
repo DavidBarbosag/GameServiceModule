@@ -3,7 +3,8 @@ package com.eci.ARSW.GameService.GameService.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
 
 @Document(collection = "game_states")
 public class GameState {
@@ -15,20 +16,22 @@ public class GameState {
 
     private String status; // IN_PROGRESS, FINISHED, PAUSED, etc.
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Date createdAt;
+    private Date updatedAt;
 
+    private List<Player> players;
+    private List<Mine> mines;
 
     public GameState() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.createdAt = new Date();
+        this.updatedAt = new Date();
     }
 
-    public GameState(String[][] boardMatrix, String status) {
+    public GameState(String[][] boardMatrix) {
         this.boardMatrix = boardMatrix;
-        this.status = status;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.status = "IN_PROGRESS";
+        this.createdAt = new Date();
+        this.updatedAt = new Date();
     }
 
     public String getId() {
@@ -51,19 +54,35 @@ public class GameState {
         this.status = status;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public List<Player> getPlayers() {
+        return players;
+    }
+
+    public void setPlayers(List<Player> players) {
+        this.players = players;
+    }
+
+    public List<Mine> getMines() {
+        return mines;
+    }
+
+    public void setMines(List<Mine> mines) {
+        this.mines = mines;
+    }
+
+    public Date getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
+    public Date getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
 }

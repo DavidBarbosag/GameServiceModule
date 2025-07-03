@@ -8,12 +8,16 @@ public class GameManager {
     private Board board;
     private Map<String, Player> players; // ID -> Player
     private List<Mine> mines;
-    private final int rows;
-    private final int cols;
+    private int rows;
+    private int cols;
     private int playerIdCounter = 1;
     private int numMinesGlobal;
     private int numMinesPerPlayer;
     private GameState gameState;
+    private String status; // IN_PROGRESS, FINISHED, PAUSED, etc.
+
+    public GameManager() {
+    }
 
     public GameManager(int rows, int cols, int numMinesGlobal, int numMinesPerPlayer) {
         this.rows = rows;
@@ -23,10 +27,12 @@ public class GameManager {
         this.mines = new ArrayList<>();
         this.numMinesGlobal = numMinesGlobal;
         this.numMinesPerPlayer = numMinesPerPlayer;
-        initializeBoard();
+        initializeBoardFromStart();
+        this.status = "IN_PROGRESS";
+        this.gameState = new GameState(new String[rows][cols]);
     }
 
-    private void initializeBoard() {
+    private void initializeBoardFromStart() {
         Random rand = new Random();
         int placed = 0;
 
@@ -50,6 +56,51 @@ public class GameManager {
             }
         }
         updateTileNumbers();
+    }
+
+    public void loadFromMatrix(GameState gameState) {
+        this.gameState = gameState;
+        String[][] matrix = gameState.getBoardMatrix();
+        this.board = new Board(rows, cols);
+        this.players = new HashMap<>();
+        this.mines = new ArrayList<>();
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                String cell = matrix[i][j];
+                Position pos = new Position(i, j);
+                if (cell != null && cell.startsWith("M")) {
+                    String stateMine = (cell.substring(1)).toString();
+                    if ("E".equals(stateMine)) {
+                        Mine mine = new Mine(pos, 'E');
+                        board.setElementAt(i, j, mine);
+                        mines.add(mine);
+                    } else if ("F".equals(stateMine)) {
+                        Mine mine = new Mine(pos, 'F');
+                        board.setElementAt(i, j, mine);
+                        mines.add(mine);
+                    } else {
+                        Mine mine = new Mine(pos, 'D');
+                        board.setElementAt(i, j, mine);
+                        mines.add(mine);
+                    }
+                } else if (cell != null && cell.startsWith("P")) {
+                    Player player = new Player(pos, numMinesPerPlayer);
+                    player.setId(cell);
+                    board.setElementAt(i, j, player);
+                    players.put(cell, player);
+                    try {
+                        int num = Integer.parseInt(cell.substring(1));
+                        if (num >= playerIdCounter) playerIdCounter = num + 1;
+                    } catch (NumberFormatException ignored) {}
+                } else {
+                    board.setElementAt(i, j, new Tile(i, j));
+                }
+            }
+        }
+        updateTileNumbers();
+        this.status = "IN_PROGRESS";
+        updateGameStateFromBoard(this.status);
     }
 
     public Player createPlayer(Position position, int mines) {
@@ -78,20 +129,21 @@ public class GameManager {
         int newX = x, newY = y;
 
         switch (direction) {
-            case 'W' -> newY--; // up
-            case 'S' -> newY++; // down
-            case 'A' -> newX--; // left
-            case 'D' -> newX++; // right
+            case 'W' -> newX--; // up
+            case 'S' -> newX++; // down
+            case 'A' -> newY--; // left
+            case 'D' -> newY++; // right
             default -> { return false; }
         }
 
         if (!board.isInBounds(newX, newY)) return false;
 
         GameElement target = board.getElementAt(newX, newY);
-        if (target instanceof Mine mine && mine.getState() != 'E') {
+        if (target instanceof Mine mine && mine.getState() == 'E') {
             player.setState(false);
             mine.setState('D');
             board.setElementAt(x, y, new Tile(x, y));
+            updateGameStateFromBoard(this.status);
             return true;
         }
 
@@ -110,6 +162,7 @@ public class GameManager {
         board.setElementAt(x, y, mine);
 
         updateTileNumbers();
+        updateGameStateFromBoard(this.status);
     }
 
     private void updateTileNumbers() {
@@ -150,20 +203,24 @@ public class GameManager {
                 } else if (elem instanceof Player player) {
                     matrix[i][j] = player.getId(); // o "P" si prefieres ocultar info
                 } else if (elem instanceof Mine mine) {
-                    matrix[i][j] = mine.getState() == 'D' ? "X" : "M"; // revelada o no
+                    if (mine.getState() == 'E') {
+                        matrix[i][j] = "ME";
+                    } else if (mine.getState() == 'D') {
+                        matrix[i][j] = "MD";
+                    } else if (mine.getState() == 'F') {
+                        matrix[i][j] = "MF";
+                    }
                 } else {
                     matrix[i][j] = "?";
                 }
             }
         }
+        this.gameState.setBoardMatrix(matrix);
+        this.gameState.setStatus(status);
+        this.gameState.setUpdatedAt(new java.util.Date());
+        this.gameState.setPlayers(new ArrayList<>(players.values()));
+        this.gameState.setMines(new ArrayList<>(mines));
 
-        if (gameState == null) {
-            gameState = new GameState(matrix, status);
-        } else {
-            gameState.setBoardMatrix(matrix);
-            gameState.setStatus(status);
-            gameState.setUpdatedAt(java.time.LocalDateTime.now());
-        }
     }
 
 
