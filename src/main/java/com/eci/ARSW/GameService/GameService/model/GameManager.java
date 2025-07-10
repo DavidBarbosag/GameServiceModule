@@ -15,6 +15,7 @@ public class GameManager {
     private int numMinesPerPlayer;
     private GameState gameState;
     private String status; // IN_PROGRESS, FINISHED, PAUSED, etc.
+    private GameElement previousElement;
 
     public GameManager() {
     }
@@ -112,6 +113,7 @@ public class GameManager {
         String playerId = "P" + playerIdCounter;
         Player player = new Player(position, mines);
         player.setId(playerId);
+        previousElement = board.getElementAt(position.getX(), position.getY());
         board.setElementAt(position.getX(), position.getY(), player);
         players.put(playerId, player);
         playerIdCounter++;
@@ -139,6 +141,11 @@ public class GameManager {
         if (!board.isInBounds(newX, newY)) return false;
 
         GameElement target = board.getElementAt(newX, newY);
+
+        if(target instanceof Player){
+            return false;
+        }
+
         if (target instanceof Mine mine && mine.getState() == 'E') {
             player.setState(false);
             mine.setState('D');
@@ -147,9 +154,10 @@ public class GameManager {
             return true;
         }
 
-        board.setElementAt(x, y, new Tile(x, y));
         player.setPosition(new Position(newX, newY));
         board.setElementAt(newX, newY, player);
+        board.setElementAt(x, y, previousElement);
+        previousElement = target;
         return true;
     }
 
