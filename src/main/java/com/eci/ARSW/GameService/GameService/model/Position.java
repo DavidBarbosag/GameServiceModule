@@ -1,5 +1,8 @@
 package com.eci.ARSW.GameService.GameService.model;
 
+/**
+ * Represents a position in a 2D space with x and y coordinates.
+ */
 public class Position {
     private int x;
     private int y;

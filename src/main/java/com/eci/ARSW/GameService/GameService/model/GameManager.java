@@ -3,6 +3,11 @@ package com.eci.ARSW.GameService.GameService.model;
 import com.eci.ARSW.GameService.GameService.model.*;
 import java.util.*;
 
+
+/**
+ * GameManager class that manages the game state, players, mines, and the game board.
+ * It provides methods to create players, move them, place mines, flag mines, and update the game state.
+ */
 public class GameManager {
 
     private Board board;
@@ -33,6 +38,10 @@ public class GameManager {
         this.gameState = new GameState(new String[rows][cols]);
     }
 
+    /**
+     * Initializes the game board with mines and tiles.
+     * Randomly places mines on the board and fills the rest with tiles.
+     */
     private void initializeBoardFromStart() {
         Random rand = new Random();
         int placed = 0;
@@ -59,6 +68,13 @@ public class GameManager {
         updateTileNumbers();
     }
 
+
+    /**
+     * Loads the game state from a given GameState object.
+     * This method populates the board, players, and mines based on the provided game state.
+     *
+     * @param gameState The GameState object containing the current game state.
+     */
     public void loadFromMatrix(GameState gameState) {
         this.gameState = gameState;
         String[][] matrix = gameState.getBoardMatrix();
@@ -104,6 +120,14 @@ public class GameManager {
         updateGameStateFromBoard(this.status);
     }
 
+    /**
+     * Creates a new player at the specified position with the given number of mines.
+     * The player is assigned a unique ID and added to the game board.
+     *
+     * @param position The position where the player will be created.
+     * @param mines    The number of mines the player can place.
+     * @return The created Player object.
+     */
     public Player createPlayer(Position position, int mines) {
 
         if (!(board.getElementAt(position.getX(), position.getY()) instanceof Tile)) {
@@ -112,7 +136,7 @@ public class GameManager {
 
         String playerId = "P" + playerIdCounter;
         Player player = new Player(position, mines);
-        player.setId(playerId);
+        player.setSymbol(playerId);
         previousElement = board.getElementAt(position.getX(), position.getY());
         board.setElementAt(position.getX(), position.getY(), player);
         players.put(playerId, player);
@@ -121,6 +145,14 @@ public class GameManager {
         return player;
     }
 
+    /**
+     * Moves a player in the specified direction if the move is valid.
+     * The player can move up (W), down (S), left (A), or right (D).
+     *
+     * @param playerId  The ID of the player to move.
+     * @param direction The direction to move the player.
+     * @return true if the move was successful, false otherwise.
+     */
     public boolean movePlayer(String playerId, char direction) {
         Player player = players.get(playerId);
         if (player == null || !player.isState()) return false;
@@ -161,6 +193,13 @@ public class GameManager {
         return true;
     }
 
+
+    /**
+     * Places a mine at the specified position for the given player.
+     * @param playerId The ID of the player placing the mine.
+     * @param x
+     * @param y
+     */
     public void placeMine(String playerId, int x, int y) {
         Player player = players.get(playerId);
         if (player == null || !player.isState() || player.getMode() != 'T') return;
@@ -173,6 +212,9 @@ public class GameManager {
         updateGameStateFromBoard(this.status);
     }
 
+    /**
+     * Update the numbers on the tiles based on the number of adjacent mines.
+     */
     private void updateTileNumbers() {
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -184,6 +226,13 @@ public class GameManager {
         }
     }
 
+
+    /**
+     * Counts the number of adjacent mines around a given position (x, y).
+     * @param x row index
+     * @param y column index
+     * @return the count of adjacent mines
+     */
     private int countAdjacentMines(int x, int y) {
         int count = 0;
         for (int dx = -1; dx <= 1; dx++) {
@@ -200,6 +249,11 @@ public class GameManager {
         return count;
     }
 
+
+    /**
+     * Updates the game state based on the current board and status.
+     * @param status
+     */
     private void updateGameStateFromBoard(String status) {
         String[][] matrix = new String[rows][cols];
 
@@ -207,17 +261,11 @@ public class GameManager {
             for (int j = 0; j < cols; j++) {
                 GameElement elem = board.getElementAt(i, j);
                 if (elem instanceof Tile tile) {
-                    matrix[i][j] = String.valueOf(tile.getAdjacentMines());
+                    matrix[i][j] = tile.getSymbol();
                 } else if (elem instanceof Player player) {
-                    matrix[i][j] = player.getId(); // o "P" si prefieres ocultar info
+                    matrix[i][j] = player.getSymbol();
                 } else if (elem instanceof Mine mine) {
-                    if (mine.getState() == 'E') {
-                        matrix[i][j] = "ME";
-                    } else if (mine.getState() == 'D') {
-                        matrix[i][j] = "MD";
-                    } else if (mine.getState() == 'F') {
-                        matrix[i][j] = "MF";
-                    }
+                    matrix[i][j] =  mine.getSymbol();
                 } else {
                     matrix[i][j] = "?";
                 }
@@ -231,19 +279,34 @@ public class GameManager {
 
     }
 
-
+    /**
+     * Returns the game board.
+     * @return the game board
+     */
     public Board getBoard() {
         return board;
     }
 
+    /**
+     * Returns the map of players in the game.
+     * @return a map where keys are player IDs and values are Player objects
+     */
     public Map<String, Player> getPlayers() {
         return players;
     }
 
+    /**
+     * Returns the list of mines in the game.
+     * @return a list of Mine objects
+     */
     public List<Mine> getMines() {
         return mines;
     }
 
+    /**
+     * Returns the gameState.
+     * @return gameState object containing the current state of the game
+     */
     public GameState getGameState() {
         updateGameStateFromBoard("IN_PROGRESS");
         return gameState;
