@@ -51,7 +51,7 @@ public class GameManager {
             int y = rand.nextInt(cols);
 
             if (board.getElementAt(x, y) == null) {
-                Mine mine = new Mine(new Position(x, y), 'E');
+                Mine mine = new Mine(new Position(x, y));
                 board.setElementAt(x, y, mine);
                 mines.add(mine);
                 placed++;
@@ -89,15 +89,18 @@ public class GameManager {
                 if (cell != null && cell.startsWith("M")) {
                     String stateMine = (cell.substring(1)).toString();
                     if ("E".equals(stateMine)) {
-                        Mine mine = new Mine(pos, 'E');
+                        Mine mine = new Mine(pos);
+                        mine.setState('E');
                         board.setElementAt(i, j, mine);
                         mines.add(mine);
                     } else if ("F".equals(stateMine)) {
-                        Mine mine = new Mine(pos, 'F');
+                        Mine mine = new Mine(pos);
+                        mine.setState('F');
                         board.setElementAt(i, j, mine);
                         mines.add(mine);
                     } else {
-                        Mine mine = new Mine(pos, 'D');
+                        Mine mine = new Mine(pos);
+                        mine.setState('D');
                         board.setElementAt(i, j, mine);
                         mines.add(mine);
                     }
@@ -204,13 +207,62 @@ public class GameManager {
         Player player = players.get(playerId);
         if (player == null || !player.isState() || player.getMode() != 'T') return;
 
-        Mine mine = new Mine(new Position(x, y), 'E');
+        Mine mine = new Mine(new Position(x, y));
         mines.add(mine);
         board.setElementAt(x, y, mine);
 
         updateTileNumbers();
         updateGameStateFromBoard(this.status);
     }
+
+    /**
+     * Flags a mine at the specified position for the given player, if is not a mine flagged the tile.
+     * @param playerId The ID of the player flagging the mine.
+     * @param x row index
+     * @param y column index
+     */
+    public void flagElement(String playerId, int x, int y) {
+        Player player = players.get(playerId);
+        if (player == null || !player.isState() || player.getMode() != 'T') return;
+
+        GameElement elem = board.getElementAt(x, y);
+        if (elem instanceof Mine mine) {
+            if (mine.getState() == 'E') {
+                mine.setState('F'); // Flag the mine
+            } else if (mine.getState() == 'F') {
+                mine.setState('D'); // Deactivate the mine
+            }
+            updateGameStateFromBoard(this.status);
+        } else if (elem instanceof Tile tile) {
+            if(!tile.isFlagged()){
+                tile.setFlagged(true);
+            }
+        }
+    }
+
+    /**
+     * Unflags a mine at the specified position for the given player, if is a tile flagged the tile.
+     * @param playerId The ID of the player unflagging the mine.
+     * @param x row index
+     * @param y column index
+     */
+    public void unflagElement(String playerId, int x, int y) {
+        Player player = players.get(playerId);
+        if (player == null || !player.isState() || player.getMode() != 'T') return;
+
+        GameElement elem = board.getElementAt(x, y);
+        if (elem instanceof Mine mine) {
+            if (mine.getState() == 'F') {
+                mine.setState('E');
+            }
+            updateGameStateFromBoard(this.status);
+        } else if (elem instanceof Tile tile) {
+            if(tile.isFlagged()){
+                tile.setFlagged(false);
+            }
+        }
+    }
+
 
     /**
      * Update the numbers on the tiles based on the number of adjacent mines.

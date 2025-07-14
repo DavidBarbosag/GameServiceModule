@@ -18,7 +18,7 @@ public class Mine implements GameElement {
      *
      * @param position the position of the mine
      */
-    public Mine(Position position, char state) {
+    public Mine(Position position) {
         this.position = position;
         this.state = state;
         this.symbol = "M"; // Default symbol for Mine Element
@@ -57,11 +57,5 @@ public class Mine implements GameElement {
         return symbol + state;
     }
 
-    /**
-     * Sets the symbol for the mine.
-     * This is used to represent the mine in the game board.
-     * @param symbol the new symbol for the mine
-     */
-    public void setSymbol(String symbol) { this.symbol = symbol; }
 
 }
