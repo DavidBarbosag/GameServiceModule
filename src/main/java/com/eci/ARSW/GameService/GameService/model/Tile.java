@@ -94,4 +94,13 @@ public class Tile implements GameElement {
     public String getSymbol() {
         return "T" + adjacentMines + (flagged ? "F" : "N");
     }
+
+    /**
+     * Sets the symbol of the tile.
+     * @param symbol the new symbol to set
+     */
+    public void setSymbol(String symbol) {
+        this.symbol = symbol;
+    }
+
 }

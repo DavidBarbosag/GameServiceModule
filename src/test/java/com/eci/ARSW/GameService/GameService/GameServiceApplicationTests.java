@@ -4,17 +4,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import com.eci.ARSW.GameService.GameService.model.*;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import com.eci.ARSW.GameService.GameService.repository.GameStateRepository;
 
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class GameServiceApplicationTests {
 
-	// Test cases for the GameService Application
 
 	// Model Tests
 
@@ -299,7 +302,336 @@ class GameServiceApplicationTests {
 		assertEquals(6, pos.getY());
 	}
 
-		@Test
+
+	// GameManager Tests
+
+	@Test
+	void testGameManagerMoveRightPlayer() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Position startPos = new Position(0, 0);
+		Player player = manager.createPlayer(startPos, 2);
+		assertNotNull(player);
+		Position newPos = new Position(0, 1);
+		manager.movePlayer("P1", 'D');
+		assertEquals(newPos.getX(), player.getPosition().getX());
+		assertEquals(newPos.getY(), player.getPosition().getY());
+	}
+
+	@Test
+	void testGameManagerMoveLeftPlayer() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Position startPos = new Position(1, 1);
+		Player player = manager.createPlayer(startPos, 2);
+		assertNotNull(player);
+		Position newPos = new Position(1, 0);
+		manager.movePlayer("P1", 'A');
+		assertEquals(newPos.getX(), player.getPosition().getX());
+		assertEquals(newPos.getY(), player.getPosition().getY());
+	}
+
+	@Test
+	void testGameManagerMoveDownPlayer() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Position startPos = new Position(1, 1);
+		Player player = manager.createPlayer(startPos, 2);
+		assertNotNull(player);
+		Position newPos = new Position(2, 1);
+		manager.movePlayer("P1", 'S');
+		assertEquals(newPos.getX(), player.getPosition().getX());
+		assertEquals(newPos.getY(), player.getPosition().getY());
+	}
+
+	@Test
+	void testGameManagerMoveUpPlayer() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Position startPos = new Position(1, 1);
+		Player player = manager.createPlayer(startPos, 2);
+		assertNotNull(player);
+		Position newPos = new Position(0, 1);
+		manager.movePlayer("P1", 'W');
+		assertEquals(newPos.getX(), player.getPosition().getX());
+		assertEquals(newPos.getY(), player.getPosition().getY());
+	}
+
+	@Test
+	void testMoveOutOfBoundsFails() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		manager.createPlayer(new Position(0, 0), 2);
+		boolean result = manager.movePlayer("P1", 'W'); // fuera del tablero
+		assertFalse(result);
+		assertEquals(0, manager.getPlayers().get("P1").getPosition().getX());
+		assertEquals(0, manager.getPlayers().get("P1").getPosition().getY());
+	}
+
+	@Test
+	void testMoveInvalidDirectionFails() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		manager.createPlayer(new Position(1, 1), 2);
+		boolean result = manager.movePlayer("P1", 'Z');
+		assertFalse(result);
+	}
+
+	@Test
+	void testMoveIntoOtherPlayerFails() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		manager.createPlayer(new Position(1, 1), 2); // P1
+		manager.createPlayer(new Position(1, 2), 2); // P2 en la derecha
+		boolean result = manager.movePlayer("P1", 'D');
+		assertFalse(result);
+		assertEquals(1, manager.getPlayers().get("P1").getPosition().getX());
+		assertEquals(1, manager.getPlayers().get("P1").getPosition().getY());
+	}
+
+	@Test
+	void testMoveIntoMineKillsPlayer() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		manager.createPlayer(new Position(1, 1), 2);
+		manager.getBoard().setElementAt(1, 2, new Mine(new Position(1, 2))); // mina a la derecha
+
+		boolean result = manager.movePlayer("P1", 'D');
+		assertTrue(result);
+		Player player = manager.getPlayers().get("P1");
+		assertFalse(player.isState()); // el jugador muere
+
+		GameElement elem = manager.getBoard().getElementAt(1, 2);
+		assertTrue(elem instanceof Mine);
+		assertEquals('D', ((Mine) elem).getState()); // mina detonada
+	}
+
+	@Test
+	void testMoveRestoresPreviousTile() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		manager.createPlayer(new Position(1, 1), 2);
+
+		// Verifica que antes haya un Tile vacío en (1,1)
+		GameElement initial = manager.getBoard().getElementAt(1, 1);
+		assertTrue(initial instanceof Player);
+
+		manager.movePlayer("P1", 'D');
+
+		GameElement restored = manager.getBoard().getElementAt(1, 1);
+		assertTrue(restored instanceof Tile); // la casilla anterior ahora es un Tile
+	}
+
+
+	@Test
+	void testPlaceMineSuccessfully() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Position startPos = new Position(2, 2);
+		Player player = manager.createPlayer(startPos, 2);
+		player.setMode('T');
+
+		manager.placeMine(player.getSymbol(), 1, 1);
+
+		GameElement element = manager.getBoard().getElementAt(1, 1);
+		assertTrue(element instanceof Mine);
+		Mine mine = (Mine) element;
+		assertEquals('E', mine.getState());
+	}
+
+	@Test
+	void testPlaceMineFailsIfPlayerIsNull() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		// Jugador inexistente
+		manager.placeMine("P99", 1, 1);
+
+		GameElement element = manager.getBoard().getElementAt(1, 1);
+		assertFalse(element instanceof Mine);
+	}
+
+	@Test
+	void testPlaceMineFailsIfPlayerIsDead() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Position startPos = new Position(1, 1);
+		Player player = manager.createPlayer(startPos, 2);
+		player.setMode('T');
+		player.setState(false); // Jugador muerto
+
+		manager.placeMine(player.getSymbol(), 2, 2);
+
+		GameElement element = manager.getBoard().getElementAt(2, 2);
+		assertFalse(element instanceof Mine);
+	}
+
+	@Test
+	void testPlaceMineFailsIfPlayerNotInTacticalMode() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Position startPos = new Position(3, 3);
+		Player player = manager.createPlayer(startPos, 2);
+		// Modo por defecto: 'N'
+
+		manager.placeMine(player.getSymbol(), 4, 4);
+
+		GameElement element = manager.getBoard().getElementAt(4, 4);
+		assertFalse(element instanceof Mine);
+	}
+
+	@Test
+	void testFlagEnabledMine() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Player player = manager.createPlayer(new Position(1, 1), 2);
+		player.setMode('T');
+
+		manager.placeMine(player.getSymbol(), 2, 2);
+
+		Mine mine = (Mine) manager.getBoard().getElementAt(2, 2);
+		assertEquals('E', mine.getState());
+
+		manager.flagElement(player.getSymbol(), 2, 2);
+		assertEquals('F', mine.getState());
+	}
+
+	@Test
+	void testFlagFlaggedMineDeactivatesIt() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Player player = manager.createPlayer(new Position(1, 1), 2);
+		player.setMode('T');
+
+		manager.placeMine(player.getSymbol(), 2, 2);
+		manager.flagElement(player.getSymbol(), 2, 2); // E → F
+		manager.flagElement(player.getSymbol(), 2, 2); // F → D
+
+		Mine mine = (Mine) manager.getBoard().getElementAt(2, 2);
+		assertEquals('D', mine.getState());
+	}
+
+	@Test
+	void testFlagTileSuccessfully() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Player player = manager.createPlayer(new Position(1, 1), 2);
+		player.setMode('T');
+
+		GameElement elem = manager.getBoard().getElementAt(0, 0);
+		assertTrue(elem instanceof Tile);
+		Tile tile = (Tile) elem;
+		assertFalse(tile.isFlagged());
+
+		manager.flagElement(player.getSymbol(), 0, 0);
+		assertTrue(tile.isFlagged());
+	}
+
+	@Test
+	void testFlagFailsIfPlayerIsNotTactical() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Player player = manager.createPlayer(new Position(2, 2), 2); // modo normal por defecto
+
+		manager.placeMine(player.getSymbol(), 3, 3);
+
+		assertInstanceOf(Tile.class, manager.getBoard().getElementAt(1, 1));
+	}
+
+	@Test
+	void testFlagFailsIfPlayerIsDead() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Player player = manager.createPlayer(new Position(2, 2), 2);
+		player.setMode('T');
+		player.setState(false);
+		String symbol = player.getSymbol();
+		manager.placeMine(symbol, 1, 1);
+		assertInstanceOf(Tile.class, manager.getBoard().getElementAt(1, 1));
+	}
+
+	@Test
+	void testFlagFailsIfPlayerDoesNotExist() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+
+		// Tile por defecto
+		GameElement elem = manager.getBoard().getElementAt(0, 0);
+		assertTrue(elem instanceof Tile);
+		Tile tile = (Tile) elem;
+		assertFalse(tile.isFlagged());
+
+		manager.flagElement("P404", 0, 0);
+		assertFalse(tile.isFlagged());
+	}
+
+	@Test
+	void testUnflagFlaggedMine() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Player player = manager.createPlayer(new Position(1, 1), 2);
+		player.setMode('T');
+
+		String symbol = player.getSymbol();
+		manager.placeMine(symbol, 2, 2);
+
+		// Flag the mine first
+		manager.flagElement(symbol, 2, 2);
+		GameElement flagged = manager.getBoard().getElementAt(2, 2);
+		assertTrue(flagged instanceof Mine);
+		assertEquals('F', ((Mine) flagged).getState());
+
+		// Unflag it
+		manager.unflagElement(symbol, 2, 2);
+		assertEquals('E', ((Mine) flagged).getState());
+	}
+
+	@Test
+	void testUnflagFlaggedTile() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Player player = manager.createPlayer(new Position(0, 0), 2);
+
+		String symbol = player.getSymbol();
+		manager.flagElement(symbol, 3, 3);
+		manager.unflagElement(symbol, 3, 3);
+		Tile tile = (Tile) manager.getBoard().getElementAt(3, 3);
+
+		assertFalse(tile.isFlagged());
+	}
+
+
+	@Test
+	void testUnflagFailsIfPlayerDead() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Player player = manager.createPlayer(new Position(0, 0), 2);
+
+		player.setMode('T');
+		String symbol = player.getSymbol();
+		manager.placeMine(symbol, 2, 2);
+		manager.flagElement(symbol, 2, 2);
+
+		player.setState(false);
+		manager.unflagElement(symbol, 2, 2);
+
+		assertEquals('F', ((Mine) manager.getBoard().getElementAt(2, 2)).getState());
+	}
+
+	@Test
+	void testBoardHasCorrectNumberOfMinesAfterInit() {
+		GameManager manager = new GameManager(5, 5, 5, 2); // 5 minas esperadas
+		int mineCount = 0;
+		for (int i = 0; i < 5; i++) {
+			for (int j = 0; j < 5; j++) {
+				if (manager.getBoard().getElementAt(i, j) instanceof Mine) {
+					mineCount++;
+				}
+			}
+		}
+		assertEquals(5, mineCount);
+	}
+
+
+	@Test
+	void testInitializeBoardDoesNotOverwriteExistingElements() {
+		GameManager manager = new GameManager(5, 5, 0, 2); // sin minas
+		manager.getBoard().setElementAt(1, 1, new Tile(1, 1));
+
+		// Forzar una inicialización manual con 1 mina
+		manager = new GameManager(5, 5, 1, 2);
+		manager.getBoard().setElementAt(1, 1, new Tile(1, 1));
+
+		int mineCount = 0;
+		for (int i = 0; i < 5; i++) {
+			for (int j = 0; j < 5; j++) {
+				if (manager.getBoard().getElementAt(i, j) instanceof Mine) {
+					mineCount++;
+				}
+			}
+		}
+		assertEquals(1, mineCount);
+	}
+
+
+	@Test
 		void testGameManagerCreatePlayer() {
 			GameManager manager = new GameManager(5, 5, 0, 2);
 			Position pos = new Position(0, 0);
@@ -309,8 +641,102 @@ class GameServiceApplicationTests {
 			assertEquals(pos.getY(), player.getPosition().getY());
 		}
 
+	@Test
+	void testGetMinesReturnsPlacedMines() {
+		GameManager manager = new GameManager(5, 5, 0, 2); // sin minas al inicio
+		Player player = manager.createPlayer(new Position(0, 0), 2);
+		player.setMode('T');
+
+		manager.placeMine(player.getSymbol(), 1, 1);
+		manager.placeMine(player.getSymbol(), 2, 2);
+
+		List<Mine> mines = manager.getMines();
+		assertEquals(2, mines.size());
+		assertTrue(mines.stream().anyMatch(m -> m.getPosition().getX() == 1 && m.getPosition().getY() == 1));
+		assertTrue(mines.stream().anyMatch(m -> m.getPosition().getX() == 2 && m.getPosition().getY() == 2));
+	}
+
+	@Test
+	void testGetGameStateReturnsUpdatedBoardMatrix() {
+		GameManager manager = new GameManager(4, 4, 0, 2);
+		Player player = manager.createPlayer(new Position(0, 0), 2);
+		player.setMode('T');
+		manager.placeMine(player.getSymbol(), 1, 1);
+
+		GameState state = manager.getGameState();
+		String[][] matrix = state.getBoardMatrix();
+
+		assertNotNull(matrix);
+		assertEquals("ME", matrix[1][1]);
+		assertEquals("P1", matrix[0][0]); // simbolo del jugador
+		assertEquals("IN_PROGRESS", state.getStatus());
+	}
+
+	@Test
+	public void testLoadFromMatrixRestoresMinesPlayersAndTiles() {
+		int rows = 3, cols = 3;
+		String[][] matrix = {
+				{"ME", "T1N", "P1"},
+				{"T2F", "T2F",  "T1N"},
+				{"T1N", "MF", "T1N"}
+		};
+
+		// 1. Crear jugadores
+		Player p1 = new Player(new Position(0, 2), 2);
+		p1.setSymbol("P1");
+		p1.setMode('N');
+		p1.setState(true);
+
+		List<Player> players = List.of(p1);
+
+		// 2. Crear minas
+		Mine m1 = new Mine(new Position(0, 0));
+		m1.setState('E');
+
+		Mine m2 = new Mine(new Position(2, 1));
+		m2.setState('F');
+
+		List<Mine> mines = List.of(m1, m2);
+
+		// 3. Crear GameState simulado
+		GameState gameState = new GameState(matrix);
+		gameState.setPlayers(players);
+		gameState.setMines(mines);
+		gameState.setStatus("IN_PROGRESS");
+
+		// 4. Cargar el GameState en un GameManager
+		GameManager manager = new GameManager();
+		manager.loadFromMatrix(gameState);
+
+		// 5. Validar minas
+		assertEquals(2, manager.getMines().size());
+		assertEquals('E', manager.getMines().get(0).getState());
+		assertEquals('F', manager.getMines().get(1).getState());
+		assertEquals("ME", ((Mine) manager.getBoard().getElementAt(0, 0)).getSymbol());
+		assertEquals("MF", ((Mine) manager.getBoard().getElementAt(2, 1)).getSymbol());
 
 
+		// 6. Validar jugador
+		assertEquals(1, manager.getPlayers().size());
+		Player loaded = manager.getPlayers().get("P1");
+		assertNotNull(loaded);
+		assertEquals(0, loaded.getPosition().getX());
+		assertEquals(2, loaded.getPosition().getY());
+		assertTrue(loaded.isState());
+		assertEquals('N', loaded.getMode());
+		assertEquals("P1", ((Player) manager.getBoard().getElementAt(0, 2)).getSymbol());
 
+		// 7. Validar Tile con bandera
+		GameElement flagged = manager.getBoard().getElementAt(1, 0);
+		assertInstanceOf(Tile.class, flagged);
+		assertTrue(((Tile) flagged).isFlagged());
+		assertEquals("T2F", ((Tile) flagged).getSymbol());
+
+		// 8. Validar símbolo exacto
+		assertEquals("T1N", ((Tile) manager.getBoard().getElementAt(2, 0)).getSymbol());
+
+		// 9. Validar estado general
+		assertEquals("IN_PROGRESS", manager.getGameState().getStatus());
+	}
 }
 

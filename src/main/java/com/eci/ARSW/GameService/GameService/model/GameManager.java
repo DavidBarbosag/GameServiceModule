@@ -11,7 +11,7 @@ import java.util.*;
 public class GameManager {
 
     private Board board;
-    private Map<String, Player> players; // ID -> Player
+    private Map<String, Player> players; // Symbol Of the Player -> Player
     private List<Mine> mines;
     private int rows;
     private int cols;
@@ -76,52 +76,58 @@ public class GameManager {
      * @param gameState The GameState object containing the current game state.
      */
     public void loadFromMatrix(GameState gameState) {
-        this.gameState = gameState;
-        String[][] matrix = gameState.getBoardMatrix();
+        this.rows = gameState.getBoardMatrix().length;
+        this.cols = gameState.getBoardMatrix()[0].length;
         this.board = new Board(rows, cols);
         this.players = new HashMap<>();
         this.mines = new ArrayList<>();
+        this.status = gameState.getStatus();
+        this.gameState = gameState;
+
+        String[][] matrix = gameState.getBoardMatrix();
+
+        for (Mine mine : gameState.getMines()) {
+            Position pos = mine.getPosition();
+            Mine newMine = new Mine(pos);
+            newMine.setState(mine.getState());
+            board.setElementAt(pos.getX(), pos.getY(), newMine);
+            mines.add(newMine);
+        }
+
+        for (Player savedPlayer : gameState.getPlayers()) {
+            Player newPlayer = new Player(savedPlayer.getPosition(), savedPlayer.getMines());
+            newPlayer.setSymbol(savedPlayer.getSymbol());
+            newPlayer.setState(savedPlayer.isState());
+            newPlayer.setMode(savedPlayer.getMode());
+
+            board.setElementAt(newPlayer.getPosition().getX(), newPlayer.getPosition().getY(), newPlayer);
+            players.put(newPlayer.getSymbol(), newPlayer);
+
+            try {
+                int num = Integer.parseInt(newPlayer.getSymbol().substring(1));
+                if (num >= playerIdCounter) playerIdCounter = num + 1;
+            } catch (NumberFormatException ignored) {}
+        }
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
+                GameElement current = board.getElementAt(i, j);
                 String cell = matrix[i][j];
-                Position pos = new Position(i, j);
-                if (cell != null && cell.startsWith("M")) {
-                    String stateMine = (cell.substring(1)).toString();
-                    if ("E".equals(stateMine)) {
-                        Mine mine = new Mine(pos);
-                        mine.setState('E');
-                        board.setElementAt(i, j, mine);
-                        mines.add(mine);
-                    } else if ("F".equals(stateMine)) {
-                        Mine mine = new Mine(pos);
-                        mine.setState('F');
-                        board.setElementAt(i, j, mine);
-                        mines.add(mine);
-                    } else {
-                        Mine mine = new Mine(pos);
-                        mine.setState('D');
-                        board.setElementAt(i, j, mine);
-                        mines.add(mine);
-                    }
-                } else if (cell != null && cell.startsWith("P")) {
-                    Player player = new Player(pos, numMinesPerPlayer);
-                    player.setId(cell);
-                    board.setElementAt(i, j, player);
-                    players.put(cell, player);
-                    try {
-                        int num = Integer.parseInt(cell.substring(1));
-                        if (num >= playerIdCounter) playerIdCounter = num + 1;
-                    } catch (NumberFormatException ignored) {}
-                } else {
+                if (current == null && cell != null && cell.startsWith("T")) {
+                    Tile tile = new Tile(i, j);
+                    tile.setFlagged(cell.endsWith("F"));
+                    tile.setSymbol(cell);
+                    board.setElementAt(i, j, tile);
+                } else if (current == null) {
                     board.setElementAt(i, j, new Tile(i, j));
                 }
             }
         }
+
         updateTileNumbers();
-        this.status = "IN_PROGRESS";
         updateGameStateFromBoard(this.status);
     }
+
 
     /**
      * Creates a new player at the specified position with the given number of mines.
@@ -223,7 +229,7 @@ public class GameManager {
      */
     public void flagElement(String playerId, int x, int y) {
         Player player = players.get(playerId);
-        if (player == null || !player.isState() || player.getMode() != 'T') return;
+        if (player == null || !player.isState()) return;
 
         GameElement elem = board.getElementAt(x, y);
         if (elem instanceof Mine mine) {
@@ -248,7 +254,7 @@ public class GameManager {
      */
     public void unflagElement(String playerId, int x, int y) {
         Player player = players.get(playerId);
-        if (player == null || !player.isState() || player.getMode() != 'T') return;
+        if (player == null || !player.isState()) return;
 
         GameElement elem = board.getElementAt(x, y);
         if (elem instanceof Mine mine) {
