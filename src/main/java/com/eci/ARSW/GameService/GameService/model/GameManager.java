@@ -58,6 +58,21 @@ public class GameManager {
             }
         }
 
+        placed = 0;
+
+        while (placed < 2 * numMinesGlobal) {
+            int x = rand.nextInt(rows);
+            int y = rand.nextInt(cols);
+
+            if (board.getElementAt(x, y) == null) {
+                Tile tile = new Tile(x, y);
+                tile.setRevealed(false);
+                board.setElementAt(x, y, tile);
+                placed++;
+            }
+        }
+
+
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 if (board.getElementAt(i, j) == null) {
@@ -150,7 +165,6 @@ public class GameManager {
         board.setElementAt(position.getX(), position.getY(), player);
         players.put(playerId, player);
         playerIdCounter++;
-
         return player;
     }
 
@@ -199,6 +213,7 @@ public class GameManager {
         board.setElementAt(newX, newY, player);
         board.setElementAt(x, y, previousElement);
         previousElement = target;
+        updateGameStateFromBoard(this.status);
         return true;
     }
 
@@ -245,6 +260,9 @@ public class GameManager {
             }
         }
     }
+
+
+
 
     /**
      * Unflags a mine at the specified position for the given player, if is a tile flagged the tile.

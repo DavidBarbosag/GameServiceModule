@@ -17,7 +17,7 @@ public class Tile implements GameElement {
      * @param y the y-coordinate of the tile
      */
     public Tile(int x, int y) {
-        this.revealed = false;
+        this.revealed = true;
         this.flagged = false;
         this.adjacentMines = 0;
         this.position = new Position();
@@ -92,7 +92,7 @@ public class Tile implements GameElement {
      * @return the symbol of the tile
      */
     public String getSymbol() {
-        return "T" + adjacentMines + (flagged ? "F" : "N");
+        return "T" + adjacentMines + (flagged ? "F" : "N") + (revealed ? "R" : "H");
     }
 
     /**

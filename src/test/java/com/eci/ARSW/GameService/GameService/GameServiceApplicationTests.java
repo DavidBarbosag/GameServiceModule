@@ -119,10 +119,10 @@ class GameServiceApplicationTests {
 		Tile tile = new Tile(2, 3);
 		assertEquals(2, tile.getPosition().getX());
 		assertEquals(3, tile.getPosition().getY());
-		assertFalse(tile.isRevealed());
+		assertTrue(tile.isRevealed());
 		assertFalse(tile.isFlagged());
 		assertEquals(0, tile.getAdjacentMines());
-		assertEquals("T0N", tile.getSymbol());
+		assertEquals("T0NR", tile.getSymbol());
 	}
 
 	@Test
@@ -139,10 +139,10 @@ class GameServiceApplicationTests {
 		Tile tile = new Tile(1, 1);
 		tile.setFlagged(true);
 		assertTrue(tile.isFlagged());
-		assertEquals("T0F", tile.getSymbol());
+		assertEquals("T0FR", tile.getSymbol());
 		tile.setFlagged(false);
 		assertFalse(tile.isFlagged());
-		assertEquals("T0N", tile.getSymbol());
+		assertEquals("T0NR", tile.getSymbol());
 	}
 
 	@Test
@@ -150,7 +150,7 @@ class GameServiceApplicationTests {
 		Tile tile = new Tile(2, 2);
 		tile.setAdjacentMines(3);
 		assertEquals(3, tile.getAdjacentMines());
-		assertEquals("T3N", tile.getSymbol());
+		assertEquals("T3NR", tile.getSymbol());
 	}
 
 	@Test
@@ -315,6 +315,7 @@ class GameServiceApplicationTests {
 		manager.movePlayer("P1", 'D');
 		assertEquals(newPos.getX(), player.getPosition().getX());
 		assertEquals(newPos.getY(), player.getPosition().getY());
+		assertEquals("P1", manager.getBoard().getElementAt(player.getPosition().getX(), player.getPosition().getY()).getSymbol());
 	}
 
 	@Test
@@ -327,6 +328,8 @@ class GameServiceApplicationTests {
 		manager.movePlayer("P1", 'A');
 		assertEquals(newPos.getX(), player.getPosition().getX());
 		assertEquals(newPos.getY(), player.getPosition().getY());
+		assertEquals("P1", manager.getBoard().getElementAt(player.getPosition().getX(), player.getPosition().getY()).getSymbol());
+
 	}
 
 	@Test
@@ -339,6 +342,8 @@ class GameServiceApplicationTests {
 		manager.movePlayer("P1", 'S');
 		assertEquals(newPos.getX(), player.getPosition().getX());
 		assertEquals(newPos.getY(), player.getPosition().getY());
+		assertEquals("P1", manager.getBoard().getElementAt(player.getPosition().getX(), player.getPosition().getY()).getSymbol());
+
 	}
 
 	@Test
@@ -351,6 +356,8 @@ class GameServiceApplicationTests {
 		manager.movePlayer("P1", 'W');
 		assertEquals(newPos.getX(), player.getPosition().getX());
 		assertEquals(newPos.getY(), player.getPosition().getY());
+		assertEquals("P1", manager.getBoard().getElementAt(player.getPosition().getX(), player.getPosition().getY()).getSymbol());
+
 	}
 
 	@Test
@@ -611,6 +618,23 @@ class GameServiceApplicationTests {
 
 
 	@Test
+	void testBoardHasCorrectNumberOfHiddenTiles() {
+		GameManager manager = new GameManager(5, 5, 5, 2); // 5 minas esperadas
+		int hiddenTiles = 0;
+		for (int i = 0; i < 5; i++) {
+			for (int j = 0; j < 5; j++) {
+				if (manager.getBoard().getElementAt(i, j) instanceof Tile tile) {
+					if (!tile.isRevealed()) {
+						hiddenTiles++;
+					}
+				}
+			}
+		}
+		assertEquals(10, hiddenTiles);
+	}
+
+
+	@Test
 	void testInitializeBoardDoesNotOverwriteExistingElements() {
 		GameManager manager = new GameManager(5, 5, 0, 2); // sin minas
 		manager.getBoard().setElementAt(1, 1, new Tile(1, 1));
@@ -730,13 +754,45 @@ class GameServiceApplicationTests {
 		GameElement flagged = manager.getBoard().getElementAt(1, 0);
 		assertInstanceOf(Tile.class, flagged);
 		assertTrue(((Tile) flagged).isFlagged());
-		assertEquals("T2F", ((Tile) flagged).getSymbol());
+		assertEquals("T2FR", ((Tile) flagged).getSymbol());
 
 		// 8. Validar símbolo exacto
-		assertEquals("T1N", ((Tile) manager.getBoard().getElementAt(2, 0)).getSymbol());
+		assertEquals("T1NR", ((Tile) manager.getBoard().getElementAt(2, 0)).getSymbol());
 
 		// 9. Validar estado general
 		assertEquals("IN_PROGRESS", manager.getGameState().getStatus());
 	}
-}
 
+
+/**
+	@Test
+	void testDiscoverTilesExpansionStopsAtNumberedTiles() {
+		GameManager manager = new GameManager(4, 4, 0, 2);
+
+		// Asignar minas para generar números alrededor
+		Mine mine = new Mine(new Position(0, 0));
+		manager.getBoard().setElementAt(0, 0, mine);
+
+
+		manager.discoverTiles(3, 0);
+
+		// Validar: solo se expanden Tiles vacías y se detiene en numeradas
+		assertTrue(((Tile) manager.getBoard().getElementAt(0, 3)).isRevealed());
+		assertTrue(((Tile) manager.getBoard().getElementAt(1, 3)).isRevealed());
+		assertTrue(((Tile) manager.getBoard().getElementAt(2, 3)).isRevealed());
+		assertTrue(((Tile) manager.getBoard().getElementAt(3, 3)).isRevealed());
+		assertTrue(((Tile) manager.getBoard().getElementAt(3, 2)).isRevealed());
+		assertTrue(((Tile) manager.getBoard().getElementAt(2, 2)).isRevealed());
+		assertTrue(((Tile) manager.getBoard().getElementAt(2, 1)).isRevealed());
+		assertTrue(((Tile) manager.getBoard().getElementAt(1, 2)).isRevealed());
+
+
+
+		// Las numeradas deben estar reveladas si son vecinas de una vacía
+		assertTrue(((Tile) manager.getBoard().getElementAt(1, 1)).isRevealed());
+
+		// No debe haberse revelado la mina
+		assertFalse(((Mine) manager.getBoard().getElementAt(0, 0)).getState() == 'D');
+	}
+**/
+}

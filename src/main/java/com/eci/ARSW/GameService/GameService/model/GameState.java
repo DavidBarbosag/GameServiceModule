@@ -52,6 +52,14 @@ public class GameState {
     }
 
     /**
+     * Sets the unique identifier of the game state.
+     * @param id the new ID of the game state
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
      * Gets the current state of the game board as a matrix.
      * @return
      */
