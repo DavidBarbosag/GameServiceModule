@@ -479,27 +479,13 @@ class GameServiceApplicationTests {
 		Player player = manager.createPlayer(new Position(1, 1), 2);
 		player.setMode('T');
 
-		manager.placeMine(player.getSymbol(), 2, 2);
+		manager.placeMine(player.getSymbol(), 1, 2);
 
-		Mine mine = (Mine) manager.getBoard().getElementAt(2, 2);
+		Mine mine = (Mine) manager.getBoard().getElementAt(1, 2);
 		assertEquals('E', mine.getState());
 
-		manager.flagElement(player.getSymbol(), 2, 2);
+		manager.flagElement(player.getSymbol(), 'r');
 		assertEquals('F', mine.getState());
-	}
-
-	@Test
-	void testFlagFlaggedMineDeactivatesIt() {
-		GameManager manager = new GameManager(5, 5, 0, 2);
-		Player player = manager.createPlayer(new Position(1, 1), 2);
-		player.setMode('T');
-
-		manager.placeMine(player.getSymbol(), 2, 2);
-		manager.flagElement(player.getSymbol(), 2, 2); // E → F
-		manager.flagElement(player.getSymbol(), 2, 2); // F → D
-
-		Mine mine = (Mine) manager.getBoard().getElementAt(2, 2);
-		assertEquals('D', mine.getState());
 	}
 
 	@Test
@@ -508,12 +494,12 @@ class GameServiceApplicationTests {
 		Player player = manager.createPlayer(new Position(1, 1), 2);
 		player.setMode('T');
 
-		GameElement elem = manager.getBoard().getElementAt(0, 0);
+		GameElement elem = manager.getBoard().getElementAt(1, 2);
 		assertTrue(elem instanceof Tile);
 		Tile tile = (Tile) elem;
 		assertFalse(tile.isFlagged());
 
-		manager.flagElement(player.getSymbol(), 0, 0);
+		manager.flagElement(player.getSymbol(), 'r');
 		assertTrue(tile.isFlagged());
 	}
 
@@ -548,7 +534,7 @@ class GameServiceApplicationTests {
 		Tile tile = (Tile) elem;
 		assertFalse(tile.isFlagged());
 
-		manager.flagElement("P404", 0, 0);
+		manager.flagElement("P404", 'r');
 		assertFalse(tile.isFlagged());
 	}
 
@@ -559,16 +545,16 @@ class GameServiceApplicationTests {
 		player.setMode('T');
 
 		String symbol = player.getSymbol();
-		manager.placeMine(symbol, 2, 2);
+		manager.placeMine(symbol, 1, 2);
 
 		// Flag the mine first
-		manager.flagElement(symbol, 2, 2);
-		GameElement flagged = manager.getBoard().getElementAt(2, 2);
+		manager.flagElement(symbol, 'r');
+		GameElement flagged = manager.getBoard().getElementAt(1, 2);
 		assertTrue(flagged instanceof Mine);
 		assertEquals('F', ((Mine) flagged).getState());
 
 		// Unflag it
-		manager.unflagElement(symbol, 2, 2);
+		manager.flagElement(symbol, 'r');
 		assertEquals('E', ((Mine) flagged).getState());
 	}
 
@@ -578,8 +564,8 @@ class GameServiceApplicationTests {
 		Player player = manager.createPlayer(new Position(0, 0), 2);
 
 		String symbol = player.getSymbol();
-		manager.flagElement(symbol, 3, 3);
-		manager.unflagElement(symbol, 3, 3);
+		manager.flagElement(symbol, 'r');
+		manager.flagElement(symbol, 'r');
 		Tile tile = (Tile) manager.getBoard().getElementAt(3, 3);
 
 		assertFalse(tile.isFlagged());
@@ -593,13 +579,13 @@ class GameServiceApplicationTests {
 
 		player.setMode('T');
 		String symbol = player.getSymbol();
-		manager.placeMine(symbol, 2, 2);
-		manager.flagElement(symbol, 2, 2);
+		manager.placeMine(symbol, 0, 1);
+		manager.flagElement(symbol, 'r');
 
 		player.setState(false);
-		manager.unflagElement(symbol, 2, 2);
+		manager.flagElement(symbol, 'r');
 
-		assertEquals('F', ((Mine) manager.getBoard().getElementAt(2, 2)).getState());
+		assertEquals('F', ((Mine) manager.getBoard().getElementAt(0, 1)).getState());
 	}
 
 	@Test
@@ -763,36 +749,4 @@ class GameServiceApplicationTests {
 		assertEquals("IN_PROGRESS", manager.getGameState().getStatus());
 	}
 
-
-/**
-	@Test
-	void testDiscoverTilesExpansionStopsAtNumberedTiles() {
-		GameManager manager = new GameManager(4, 4, 0, 2);
-
-		// Asignar minas para generar números alrededor
-		Mine mine = new Mine(new Position(0, 0));
-		manager.getBoard().setElementAt(0, 0, mine);
-
-
-		manager.discoverTiles(3, 0);
-
-		// Validar: solo se expanden Tiles vacías y se detiene en numeradas
-		assertTrue(((Tile) manager.getBoard().getElementAt(0, 3)).isRevealed());
-		assertTrue(((Tile) manager.getBoard().getElementAt(1, 3)).isRevealed());
-		assertTrue(((Tile) manager.getBoard().getElementAt(2, 3)).isRevealed());
-		assertTrue(((Tile) manager.getBoard().getElementAt(3, 3)).isRevealed());
-		assertTrue(((Tile) manager.getBoard().getElementAt(3, 2)).isRevealed());
-		assertTrue(((Tile) manager.getBoard().getElementAt(2, 2)).isRevealed());
-		assertTrue(((Tile) manager.getBoard().getElementAt(2, 1)).isRevealed());
-		assertTrue(((Tile) manager.getBoard().getElementAt(1, 2)).isRevealed());
-
-
-
-		// Las numeradas deben estar reveladas si son vecinas de una vacía
-		assertTrue(((Tile) manager.getBoard().getElementAt(1, 1)).isRevealed());
-
-		// No debe haberse revelado la mina
-		assertFalse(((Mine) manager.getBoard().getElementAt(0, 0)).getState() == 'D');
-	}
-**/
 }

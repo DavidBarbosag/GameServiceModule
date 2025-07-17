@@ -85,4 +85,19 @@ public class GameManagerController {
                           @RequestParam int y) {
         gameService.placeMine(playerId, x, y);
     }
+
+
+    /**
+     * Flags an element in the game.
+     *
+     * @param playerId  The ID of the player flagging the element.
+     * @param direction The direction of the element to be flagged (e.g., 'u', 'd', 'l', 'r').
+     */
+    @PostMapping("/flag")
+    public void flagElement(@RequestParam String playerId,
+                            @RequestParam char direction) {
+        gameService.flagElement(playerId, direction);
+    }
+
+
 }

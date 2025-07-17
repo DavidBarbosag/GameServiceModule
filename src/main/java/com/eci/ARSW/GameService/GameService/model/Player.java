@@ -7,17 +7,16 @@ import org.springframework.data.mongodb.core.mapping.Document;
 /**
  * Represents a player in the game.
  */
-@Document(collection = "players")
 public class Player implements GameElement {
 
-    @Id
-    private String id;
 
+    private String id;
     private Position position;
     private int mines;
     private boolean state; // alive or not
     private char mode; // 'N' = normal, 'T' = tactical (can place bombs)
     private String symbol = "P";
+    private int score = 0;
 
     public Player() {}
 
@@ -105,5 +104,17 @@ public class Player implements GameElement {
      * @param symbol the new symbol for the player
      */
     public void setSymbol(String symbol) { this.symbol = symbol; }
+
+    /**
+     * Returns the score of the player.
+     * @return the player's score
+     */
+    public int getScore() { return score; }
+
+    /**
+     * Sets the score of the player.
+     * @param score the new score for the player
+     */
+    public void setScore(int score) { this.score = score;}
 
 }

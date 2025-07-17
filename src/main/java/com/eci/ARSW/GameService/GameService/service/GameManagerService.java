@@ -47,6 +47,16 @@ public class GameManagerService {
         return gameManager.movePlayer(playerId, direction);
     }
 
+
+    /**
+     * Flags an element in the game.
+     * @param playerId of the player flagging the element
+     * @param direction the direction of the element to be flagged (u, d, l, r)
+     */
+    public void flagElement(String playerId, char direction) {
+        gameManager.flagElement(playerId, direction);
+    }
+
     /**
      * Places a mine for the specified player at the given coordinates.
      * @param playerId of the player placing the mine
