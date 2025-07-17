@@ -158,6 +158,12 @@ public class GameManager {
             throw new IllegalArgumentException("Invalid position: already occupied by a Mine or another Player.");
         }
 
+        //Position freePosition = findFreePosition();
+
+        //if (!(board.getElementAt(freePosition.getX(), freePosition.getY()) instanceof Tile)) {
+            //throw new IllegalArgumentException("Invalid position: already occupied by a Mine or another Player.");
+        //}
+
         String playerId = "P" + playerIdCounter;
         Player player = new Player(position, mines);
         player.setSymbol(playerId);
@@ -318,6 +324,21 @@ public class GameManager {
         return count;
     }
 
+    /**
+     * Finds a free position on the board where a new player can be placed.
+     * @return a Position object representing a free position on the board
+     */
+    private Position findFreePosition() {
+        Random rand = new Random();
+        Position pos;
+        do {
+            int x = rand.nextInt(rows);
+            int y = rand.nextInt(cols);
+            pos = new Position(x, y);
+        } while (board.getElementAt(pos.getX(), pos.getY()) != null);
+        return pos;
+    }
+
 
     /**
      * Updates the game state based on the current board and status.
@@ -380,4 +401,6 @@ public class GameManager {
         updateGameStateFromBoard("IN_PROGRESS");
         return gameState;
     }
+
+
 }

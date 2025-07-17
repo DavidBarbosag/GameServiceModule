@@ -1,5 +1,5 @@
 
-package com.eci.ARSW.GameService.GameService.controller;
+package com.eci.ARSW.GameService.GameService.LegacyController;
 
 import com.eci.ARSW.GameService.GameService.model.*;
 import com.eci.ARSW.GameService.GameService.service.GameManagerService;
