@@ -10,6 +10,7 @@ import java.util.*;
  */
 public class GameManager {
 
+    private String id;
     private Board board;
     private Map<String, Player> players; // Symbol Of the Player -> Player
     private List<Mine> mines;
@@ -24,6 +25,7 @@ public class GameManager {
 
     public GameManager() {
     }
+
 
     public GameManager(int rows, int cols, int numMinesGlobal, int numMinesPerPlayer) {
         this.rows = rows;
@@ -402,5 +404,19 @@ public class GameManager {
         return gameState;
     }
 
+    /**
+     * Returns the id of the GameManager.
+     * @return the id of the GameManager
+     */
+    public String getId() {
+        return id;
+    }
 
+    /**
+     * Sets the id of the GameManager.
+     * @param id the new id of the GameManager
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
 }
