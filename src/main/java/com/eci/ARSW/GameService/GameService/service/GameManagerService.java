@@ -14,6 +14,7 @@ public class GameManagerService {
     public void initializeGame(String gameId, int rows, int cols, int numMinesGlobal, int numMinesPerPlayer) {
         GameManager game = new GameManager(rows, cols, numMinesGlobal, numMinesPerPlayer);
         game.setId(gameId);
+        game.getGameState().setGameId(gameId);
         gameInstances.put(gameId, game);    }
 
     public GameState getGameState(String gameId) {

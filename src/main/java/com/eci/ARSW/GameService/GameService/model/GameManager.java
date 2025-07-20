@@ -20,7 +20,7 @@ public class GameManager {
     private int numMinesGlobal;
     private int numMinesPerPlayer;
     private GameState gameState;
-    private String status; // IN_PROGRESS, FINISHED, PAUSED, etc.
+    private String status = "IN_PROGRESS"; // IN_PROGRESS, FINISHED, PAUSED, etc.
     private GameElement previousElement;
 
     public GameManager() {
@@ -36,7 +36,6 @@ public class GameManager {
         this.numMinesGlobal = numMinesGlobal;
         this.numMinesPerPlayer = numMinesPerPlayer;
         initializeBoardFromStart();
-        this.status = "IN_PROGRESS";
         this.gameState = new GameState(new String[rows][cols]);
     }
 
@@ -156,22 +155,18 @@ public class GameManager {
      */
     public Player createPlayer(Position position, int mines) {
 
-        if (!(board.getElementAt(position.getX(), position.getY()) instanceof Tile)) {
+        Position freePosition = findFreePosition();
+
+        if (!(board.getElementAt(freePosition.getX(), freePosition.getY()) instanceof Tile)) {
             throw new IllegalArgumentException("Invalid position: already occupied by a Mine or another Player.");
         }
 
-        //Position freePosition = findFreePosition();
-
-        //if (!(board.getElementAt(freePosition.getX(), freePosition.getY()) instanceof Tile)) {
-            //throw new IllegalArgumentException("Invalid position: already occupied by a Mine or another Player.");
-        //}
-
         String playerId = "P" + playerIdCounter;
-        Player player = new Player(position, mines);
+        Player player = new Player(freePosition, mines);
         player.setSymbol(playerId);
         player.setId(playerId);
-        previousElement = board.getElementAt(position.getX(), position.getY());
-        board.setElementAt(position.getX(), position.getY(), player);
+        previousElement = board.getElementAt(freePosition.getX(), freePosition.getY());
+        board.setElementAt(freePosition.getX(), freePosition.getY(), player);
         players.put(playerId, player);
         playerIdCounter++;
         return player;
@@ -185,7 +180,10 @@ public class GameManager {
      * @param direction The direction to move the player.
      * @return true if the move was successful, false otherwise.
      */
-    public boolean movePlayer(String playerId, char direction) {
+    public synchronized boolean movePlayer(String playerId, char direction) {
+
+        if ("FINISHED".equals(this.status)) return false;
+
         Player player = players.get(playerId);
         if (player == null || !player.isState()) return false;
 
@@ -233,7 +231,7 @@ public class GameManager {
      * @param x
      * @param y
      */
-    public void placeMine(String playerId, int x, int y) {
+    public synchronized void placeMine(String playerId, int x, int y) {
         Player player = players.get(playerId);
         if (player == null || !player.isState() || player.getMode() != 'T') return;
 
@@ -251,7 +249,10 @@ public class GameManager {
      * @param dir The direction to flag the mine ('u', 'd', 'l', 'r').
      * @return true if the flagging was successful, false otherwise.
      */
-    public boolean flagElement(String playerId, char dir) {
+    public synchronized boolean flagElement(String playerId, char dir) {
+
+        if ("FINISHED".equals(this.status)) return false;
+
         Player player = players.get(playerId);
         if (player == null || !player.isState()) return false;
 
@@ -273,8 +274,9 @@ public class GameManager {
         if (elem instanceof Mine mine) {
             if (mine.getState() == 'E') {
                 mine.setState('F');
+                mine.setAsociatedPlayerId(playerId);
                 players.get(playerId).setScore(players.get(playerId).getScore() + 1);
-            } else if (mine.getState() == 'F') {
+            } else if (mine.getState() == 'F' && mine.getAsociatedPlayerId().equals(playerId)) {
                 mine.setState('E');
                 players.get(playerId).setScore(players.get(playerId).getScore() - 1);
             }
@@ -286,6 +288,7 @@ public class GameManager {
                 tile.setFlagged(false);
             }
         }
+        itsGameOver(playerId);
         return true;
     }
 
@@ -337,10 +340,9 @@ public class GameManager {
             int x = rand.nextInt(rows);
             int y = rand.nextInt(cols);
             pos = new Position(x, y);
-        } while (board.getElementAt(pos.getX(), pos.getY()) != null);
+        } while (!(board.getElementAt(pos.getX(), pos.getY()) instanceof Tile));
         return pos;
     }
-
 
     /**
      * Updates the game state based on the current board and status.
@@ -372,6 +374,51 @@ public class GameManager {
     }
 
     /**
+     * Checks if the game is over by verifying if all mines are deactivated.
+     * If all mines are deactivated, it updates the game status to "FINISHED".
+     * @return true if the game is over, false otherwise
+     */
+    private synchronized void itsGameOver(String playerId) {
+        if ("FINISHED".equals(this.status)) return;
+
+        boolean allMinesFlagged = true;
+        for(Mine m : mines) {
+            if (m.getState() == 'E') {
+                allMinesFlagged = false;
+                break;
+            }
+        }
+
+        boolean allPlayersDead = true;
+        for(Player p : players.values()) {
+            if (p.isState()) {
+                allPlayersDead = false;
+                break;
+            }
+        }
+
+        if (allMinesFlagged || allPlayersDead) {
+            this.status = "FINISHED";
+
+            Player winner = null;
+            int maxScore = -1;
+            for (Player p : players.values()) {
+                if (p.isState() && p.getScore() > maxScore) {
+                    maxScore = p.getScore();
+                    winner = p;
+                }
+            }
+
+            if (winner == null) {
+                winner = players.get(playerId);
+            }
+
+            this.gameState.setWinnerId(winner != null ? winner.getId() : null);
+            updateGameStateFromBoard(this.status);
+        }
+    }
+
+    /**
      * Returns the game board.
      * @return the game board
      */
@@ -400,7 +447,7 @@ public class GameManager {
      * @return gameState object containing the current state of the game
      */
     public GameState getGameState() {
-        updateGameStateFromBoard("IN_PROGRESS");
+        updateGameStateFromBoard(this.status);
         return gameState;
     }
 

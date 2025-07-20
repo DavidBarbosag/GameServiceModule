@@ -16,8 +16,9 @@ public class GameState {
     @Id
     private String id;
 
+    private String gameId;
     private String[][] boardMatrix;
-
+    private String winnerId;
     private String status; // IN_PROGRESS, FINISHED, PAUSED, etc.
 
     private Date createdAt;
@@ -152,6 +153,38 @@ public class GameState {
      */
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    /**
+     * Returns the unique identifier of the game associated with this game state.
+     * @return the game ID
+     */
+    public String getGameId() {
+        return gameId;
+    }
+
+    /**
+     * Sets the unique identifier of the game associated with this game state.
+     * @param gameId the new game ID
+     */
+    public void setGameId(String gameId) {
+        this.gameId = gameId;
+    }
+
+    /**
+     * Returns the ID of the player who won the game.
+     * @return the winner's player ID
+     */
+    public String getWinnerId() {
+        return winnerId;
+    }
+
+    /**
+     * Sets the ID of the player who won the game.
+     * @param winnerId the ID of the winning player
+     */
+    public void setWinnerId(String winnerId) {
+        this.winnerId = winnerId;
     }
 }
 

@@ -12,6 +12,7 @@ public class Mine implements GameElement {
     private Position position;
     private char state = 'E'; // E = Enabled, F = flagged, D = Deactivated
     private String symbol;
+    private String asociatedPlayerId;
 
     /**
      * Constructs a Mine with a given position and default state.
@@ -55,6 +56,22 @@ public class Mine implements GameElement {
      */
     public String getSymbol() {
         return symbol + state;
+    }
+
+    /**
+     * Get the player associated with the mine.
+     * @return the ID of the associated player
+     */
+    public String getAsociatedPlayerId() {
+        return asociatedPlayerId;
+    }
+
+    /**
+     * Set the player associated with the mine.
+     * @param asociatedPlayerId the ID of the associated player
+     */
+    public void setAsociatedPlayerId(String asociatedPlayerId) {
+        this.asociatedPlayerId = asociatedPlayerId;
     }
 
 

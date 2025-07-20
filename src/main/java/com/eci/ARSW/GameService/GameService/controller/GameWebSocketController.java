@@ -15,6 +15,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -39,6 +41,11 @@ public class GameWebSocketController {
     @MessageMapping("/createPlayer/{gameId}")
     public void createPlayer(@DestinationVariable String gameId, CreatePlayerDTO dto, Principal principal) {
         Player player = gameService.addPlayer(gameId, new Position(dto.getX(), dto.getY()), dto.getMines());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("player", player);
+        response.put("yourPlayerId", player.getId());
+
         messagingTemplate.convertAndSend("/topic/game/" + gameId + "/playerCreated", player);
         messagingTemplate.convertAndSend("/topic/game/" + gameId, gameService.getGameState(gameId));
     }
