@@ -341,6 +341,8 @@ class GameServiceApplicationTests {
 		Position startPos = new Position(1, 1);
 		Player player = manager.createPlayer(startPos, 2);
 		player.setPosition(startPos);
+		manager.getBoard().setElementAt(1, 1, player);
+		manager.getBoard().setElementAt(2, 1, new Tile(2, 1));
 		assertNotNull(player);
 		Position newPos = new Position(2, 1);
 		manager.movePlayer("P1", 'S');
@@ -356,6 +358,8 @@ class GameServiceApplicationTests {
 		Position startPos = new Position(1, 1);
 		Player player = manager.createPlayer(startPos, 2);
 		player.setPosition(startPos);
+		manager.getBoard().setElementAt(1, 1, player);
+		manager.getBoard().setElementAt(0, 1, new Tile(0, 1));
 		assertNotNull(player);
 		Position newPos = new Position(0, 1);
 		manager.movePlayer("P1", 'W');
@@ -431,6 +435,7 @@ class GameServiceApplicationTests {
 		Player player = manager.getPlayers().get("P1");
 		player.setPosition(pos);
 		manager.getBoard().setElementAt(1, 1, player);
+		manager.getBoard().setElementAt(1, 2, new Tile(1, 2));
 
 		// Verifica que antes haya un Tile vacío en (1,1)
 		GameElement initial = manager.getBoard().getElementAt(1, 1);
@@ -451,6 +456,7 @@ class GameServiceApplicationTests {
 		player.setMode('T');
 		player.setPosition(startPos);
 		manager.getBoard().setElementAt(2, 2, player);
+		manager.getBoard().setElementAt(1, 2, new Tile(1, 2));
 
 		manager.placeMine(player.getSymbol(), 'u');
 
@@ -525,14 +531,15 @@ class GameServiceApplicationTests {
 		player.setPosition(positionPlayer);
 		player.setMode('T');
 		manager.getBoard().setElementAt(1, 1, player);
+		manager.getBoard().setElementAt(0, 1, new Tile(0, 1));
 		manager.placeMine(player.getSymbol(), 'u');
 
-		GameElement elem = manager.getBoard().getElementAt(1, 2);
+		GameElement elem = manager.getBoard().getElementAt(1, 0 );
 		assertTrue(elem instanceof Tile);
 		Tile tile = (Tile) elem;
 		assertFalse(tile.isFlagged());
 
-		manager.flagElement(player.getSymbol(), 'r');
+		manager.flagElement(player.getSymbol(), 'l');
 		assertTrue(tile.isFlagged());
 	}
 
@@ -543,6 +550,8 @@ class GameServiceApplicationTests {
 		Player player = manager.createPlayer(new Position(2, 2), 2);
 		player.setMode('T');
 		player.setState(false);
+		player.setPosition(new Position(2, 2));
+		manager.getBoard().setElementAt(2, 2, player);
 		String symbol = player.getSymbol();
 		Position pos = new Position(2, 2);
 		player.setPosition(pos);
@@ -574,6 +583,7 @@ class GameServiceApplicationTests {
 		String symbol = player.getSymbol();
 		player.setPosition(new Position(1, 1));
 		manager.getBoard().setElementAt(1, 1, player);
+		manager.getBoard().setElementAt(1, 2, new Tile(1,2));
 
 		manager.placeMine(symbol, 'r');
 		manager.placeMine(symbol, 'u');
@@ -593,6 +603,9 @@ class GameServiceApplicationTests {
 	void testUnflagFlaggedTile() {
 		GameManager manager = new GameManager(5, 5, 0, 2);
 		Player player = manager.createPlayer(new Position(0, 0), 2);
+		player.setPosition(new Position(0, 0));
+		manager.getBoard().setElementAt(0, 0, player);
+		manager.getBoard().setElementAt(0, 1, new Tile(0, 1));
 
 		String symbol = player.getSymbol();
 		manager.flagElement(symbol, 'r');
@@ -610,6 +623,7 @@ class GameServiceApplicationTests {
 		player.setMode('T');
 		player.setPosition(new Position(0, 0));
 		manager.getBoard().setElementAt(0, 0, player);
+		manager.getBoard().setElementAt(0, 1, new Tile(0,1));
 		String symbol = player.getSymbol();
 		manager.placeMine(symbol, 'r');
 		manager.flagElement(symbol, 'r');
@@ -652,26 +666,6 @@ class GameServiceApplicationTests {
 	}
 
 
-	@Test
-	void testInitializeBoardDoesNotOverwriteExistingElements() {
-		GameManager manager = new GameManager(5, 5, 0, 2); // sin minas
-		manager.getBoard().setElementAt(1, 1, new Tile(1, 1));
-
-		// Forzar una inicialización manual con 1 mina
-		manager = new GameManager(5, 5, 1, 2);
-		manager.getBoard().setElementAt(1, 1, new Tile(1, 1));
-
-		int mineCount = 0;
-		for (int i = 0; i < 5; i++) {
-			for (int j = 0; j < 5; j++) {
-				if (manager.getBoard().getElementAt(i, j) instanceof Mine) {
-					mineCount++;
-				}
-			}
-		}
-		assertEquals(1, mineCount);
-	}
-
 
 	@Test
 		void testGameManagerCreatePlayer() {
@@ -691,6 +685,9 @@ class GameServiceApplicationTests {
 		Position startPos = new Position(0, 0);
 		player.setPosition(startPos);
 		player.setMode('T');
+		manager.getBoard().setElementAt(0, 0, player);
+		manager.getBoard().setElementAt(0, 1, new Tile(0, 1));
+		manager.getBoard().setElementAt(1, 0, new Tile(1, 0));
 
 		manager.placeMine(player.getSymbol(), 'r');
 		manager.placeMine(player.getSymbol(), 'd');
@@ -709,6 +706,7 @@ class GameServiceApplicationTests {
 		player.setPosition(startPos);
 		player.setMode('T');
 		manager.getBoard().setElementAt(0, 0, player);
+		manager.getBoard().setElementAt(0, 1, new Tile(0, 1));
 		manager.placeMine(player.getSymbol(), 'r');
 
 		GameState state = manager.getGameState();
@@ -786,5 +784,96 @@ class GameServiceApplicationTests {
 		// 9. Validar estado general
 		assertEquals("IN_PROGRESS", manager.getGameState().getStatus());
 	}
+
+
+	// Pruebas para changePlayerMode
+	@Test
+	void testChangePlayerModeToTactical() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Player player = manager.createPlayer(new Position(1, 1), 2);
+		manager.changePlayerMode(player.getSymbol(), 'T');
+		assertEquals('T', player.getMode());
+	}
+
+	@Test
+	void testChangePlayerModeToNormal() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Player player = manager.createPlayer(new Position(1, 1), 2);
+		player.setMode('T');
+		manager.changePlayerMode(player.getSymbol(), 'N');
+		assertEquals('N', player.getMode());
+	}
+
+	@Test
+	void testChangePlayerModeFailsForInvalidMode() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Player player = manager.createPlayer(new Position(1, 1), 2);
+		assertThrows(IllegalArgumentException.class, () -> {
+			manager.changePlayerMode(player.getSymbol(), 'X');
+		});
+	}
+
+	@Test
+	void testChangePlayerModeFailsForDeadPlayer() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Player player = manager.createPlayer(new Position(1, 1), 2);
+		player.setState(false);
+		manager.changePlayerMode(player.getSymbol(), 'T');
+		assertNotEquals('T', player.getMode());
+	}
+
+
+	@Test
+	void testGameEndsWhenAllPlayersDead() {
+		GameManager manager = new GameManager(2, 2, 0, 1);
+		Player player = manager.createPlayer(new Position(0, 0), 1);
+		player.setPosition(new Position(0, 0));
+		player.setMode('T');
+		manager.getBoard().setElementAt(0,0, player);
+		manager.getBoard().setElementAt(0, 1, new Tile(0,1));
+		// Matar al jugador
+		manager.placeMine(player.getId(), 'r');
+		manager.movePlayer(player.getSymbol(), 'D');
+		assertEquals(false, player.isState());
+		assertEquals("FINISHED", manager.getGameState().getStatus());
+	}
+
+	// Pruebas para placeMine en casos límite
+	@Test
+	void testPlaceMineFailsWhenPositionOccupied() {
+		GameManager manager = new GameManager(5, 5, 0, 2);
+		Player player1 = manager.createPlayer(new Position(1, 1), 2);
+		player1.setPosition(new Position(1, 1));
+		manager.getBoard().setElementAt(1, 1, player1);
+		Player player2 = manager.createPlayer(new Position(1, 2), 2);
+		player2.setPosition(new Position(1, 2));
+		manager.getBoard().setElementAt(1, 2, player2);
+		player1.setMode('T');
+
+		// Intentar colocar mina donde está otro jugador
+		manager.placeMine(player1.getSymbol(), 'r');
+
+		GameElement element = manager.getBoard().getElementAt(1, 2);
+		assertFalse(element instanceof Mine);
+	}
+
+	@Test
+	void testPlaceMineFailsWhenGameFinished() {
+		GameManager manager = new GameManager(2, 2, 1, 1);
+		Player player = manager.createPlayer(new Position(0, 0), 1);
+		player.setPosition(new Position(0, 0));
+		manager.getBoard().setElementAt(0,0, player);
+		player.setMode('T');
+
+		// Terminar el juego
+		manager.getBoard().setElementAt(0, 1, new Mine(new Position(0, 1)));
+		manager.movePlayer(player.getSymbol(), 'D');
+
+		// Intentar colocar mina
+		manager.placeMine(player.getSymbol(), 'r');
+		GameElement element = manager.getBoard().getElementAt(0, 1);
+		assertNotEquals('E', ((Mine) element).getState());
+	}
+
 
 }

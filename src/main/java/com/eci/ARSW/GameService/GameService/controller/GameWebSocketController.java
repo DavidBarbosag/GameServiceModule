@@ -62,4 +62,18 @@ public class GameWebSocketController {
         gameService.flagElement(gameId, dto.getPlayerId(), dto.getDirection());
         messagingTemplate.convertAndSend("/topic/game/" + gameId, gameService.getGameState(gameId));
     }
+
+    @MessageMapping("/placeMine/{gameId}")
+    public void placeMine(@DestinationVariable String gameId, PlayerActionDTO dto) {
+        System.out.println("PLACE MINE recibido en gameId=" + gameId + ": " + dto);
+        gameService.placeMine(gameId, dto.getPlayerId(), dto.getDirection());
+        messagingTemplate.convertAndSend("/topic/game/" + gameId, gameService.getGameState(gameId));
+    }
+
+    @MessageMapping("/changeMode/{gameId}")
+    public void changeMode(@DestinationVariable String gameId, PlayerActionDTO dto) {
+        System.out.println("CHANGE MODE recibido en gameId=" + gameId + ": " + dto);
+        gameService.changePlayerMode(gameId, dto.getPlayerId(), dto.getMode());
+        messagingTemplate.convertAndSend("/topic/game/" + gameId, gameService.getGameState(gameId));
+    }
 }

@@ -213,6 +213,7 @@ public class GameManager {
             mine.setState('D');
             board.setElementAt(x, y, new Tile(x, y));
             updateGameStateFromBoard(this.status);
+            itsGameOver(playerId);
             return true;
         }
 
@@ -221,6 +222,8 @@ public class GameManager {
         board.setElementAt(x, y, previousElement);
         previousElement = target;
         updateGameStateFromBoard(this.status);
+        updateTileNumbers();
+        itsGameOver(playerId);
         return true;
     }
 
@@ -256,6 +259,22 @@ public class GameManager {
 
         updateTileNumbers();
         updateGameStateFromBoard(this.status);
+    }
+
+    /**
+     * Changes the mode of the player to either 'N' (normal) or 'T' (tactical).
+     * @param playerId The ID of the player whose mode is to be changed.
+     * @param mode The new mode for the player ('N' or 'T').
+     */
+    public void changePlayerMode(String playerId, char mode) {
+        Player player = players.get(playerId);
+        if (player == null || !player.isState()) return;
+
+        if (mode == 'N' || mode == 'T') {
+            player.setMode(mode);
+        } else {
+            throw new IllegalArgumentException("Invalid mode: " + mode);
+        }
     }
 
     /**

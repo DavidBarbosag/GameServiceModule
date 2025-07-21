@@ -13,7 +13,7 @@ public class Player implements GameElement {
     private String id;
     private Position position;
     private int mines;
-    private boolean state; // alive or not
+    private boolean state;
     private char mode; // 'N' = normal, 'T' = tactical (can place bombs)
     private String symbol = "P";
     private int score = 0;
@@ -29,7 +29,7 @@ public class Player implements GameElement {
     public Player(Position position, int mines) {
         this.position = position;
         this.mines = mines;
-        this.state = true; // Default state is alive
+        this.state = true;
         this.mode = 'N'; // Default mode is normal
     }
 

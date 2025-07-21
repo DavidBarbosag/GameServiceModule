@@ -47,6 +47,12 @@ public class GameManagerService {
         game.placeMine(playerId, dir);
     }
 
+    public void changePlayerMode(String gameId, String playerId, char mode) {
+        GameManager game = gameInstances.get(gameId);
+        if (game == null) throw new IllegalArgumentException("Game with ID " + gameId + " not found");
+        game.changePlayerMode(playerId, mode);
+    }
+
     public Board getBoard(String gameId) {
         GameManager game = gameInstances.get(gameId);
         if (game == null) throw new IllegalArgumentException("Game with ID " + gameId + " not found");
