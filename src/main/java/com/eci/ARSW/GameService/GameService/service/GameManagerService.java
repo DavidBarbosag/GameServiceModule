@@ -41,10 +41,10 @@ public class GameManagerService {
         game.flagElement(playerId, direction);
     }
 
-    public void placeMine(String gameId, String playerId, int x, int y) {
+    public void placeMine(String gameId, String playerId, char dir) {
         GameManager game = gameInstances.get(gameId);
         if (game == null) throw new IllegalArgumentException("Game with ID " + gameId + " not found");
-        game.placeMine(playerId, x, y);
+        game.placeMine(playerId, dir);
     }
 
     public Board getBoard(String gameId) {

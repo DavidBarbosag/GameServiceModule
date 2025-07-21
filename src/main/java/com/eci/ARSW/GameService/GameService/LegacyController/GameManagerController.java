@@ -43,9 +43,8 @@ public class GameManagerController {
     @PostMapping("/mine")
     public void placeMine(@RequestParam String gameId,
                           @RequestParam String playerId,
-                          @RequestParam int x,
-                          @RequestParam int y) {
-        gameService.placeMine(gameId, playerId, x, y);
+                          @RequestParam char dir) {
+        gameService.placeMine(gameId, playerId, dir);
     }
 
     @PostMapping("/flag")

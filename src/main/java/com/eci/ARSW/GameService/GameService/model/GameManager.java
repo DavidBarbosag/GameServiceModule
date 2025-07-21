@@ -228,16 +228,31 @@ public class GameManager {
     /**
      * Places a mine at the specified position for the given player.
      * @param playerId The ID of the player placing the mine.
-     * @param x
-     * @param y
+     * @param dir The direction to place the mine ('u', 'd', 'l', 'r').
      */
-    public synchronized void placeMine(String playerId, int x, int y) {
+    public synchronized void placeMine(String playerId,  char dir) {
         Player player = players.get(playerId);
         if (player == null || !player.isState() || player.getMode() != 'T') return;
 
-        Mine mine = new Mine(new Position(x, y));
-        mines.add(mine);
-        board.setElementAt(x, y, mine);
+        int x = player.getPosition().getX();
+        int y = player.getPosition().getY();
+
+        int newX = x, newY = y;
+
+        switch (dir) {
+            case 'u' -> newX--; // up
+            case 'd' -> newX++; // down
+            case 'l' -> newY--; // left
+            case 'r' -> newY++; // right
+            default -> { return; }
+        }
+
+        GameElement elem = board.getElementAt(newX, newY);
+        if(elem instanceof Tile) {
+            Mine mine = new Mine(new Position(newX, newY));
+            mines.add(mine);
+            board.setElementAt(newX, newY, mine);
+        }
 
         updateTileNumbers();
         updateGameStateFromBoard(this.status);
