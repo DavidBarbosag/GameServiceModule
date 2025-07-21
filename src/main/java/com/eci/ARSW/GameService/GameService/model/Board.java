@@ -85,8 +85,7 @@ public class Board {
     }
 
     /**
-     * Sets the matrix representing the board.
-     * @param matrix to be set
+     * Returns the number of rows in the board.
      */
     public int getRows() {
         return rows;

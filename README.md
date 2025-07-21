@@ -207,6 +207,4 @@ public synchronized boolean flagElement(String playerId, char dir)
 
 
 ## Class Diagram
-![GameServiceCD](https://github.com/user-attachments/assets/59b8b49f-52da-496c-a87e-01bd83d86eaf)
-
-
+![GameServiceCD.png](assets/GameServiceCD.png)
