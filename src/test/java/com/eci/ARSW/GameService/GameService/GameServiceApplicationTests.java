@@ -552,6 +552,7 @@ class GameServiceApplicationTests {
 		player.setState(false);
 		player.setPosition(new Position(2, 2));
 		manager.getBoard().setElementAt(2, 2, player);
+		manager.getBoard().setElementAt(1, 2, new Tile(1, 2));
 		String symbol = player.getSymbol();
 		Position pos = new Position(2, 2);
 		player.setPosition(pos);
@@ -601,7 +602,7 @@ class GameServiceApplicationTests {
 
 	@Test
 	void testUnflagFlaggedTile() {
-		GameManager manager = new GameManager(5, 5, 0, 2);
+		GameManager manager = new GameManager(5, 5, 2, 2);
 		Player player = manager.createPlayer(new Position(0, 0), 2);
 		player.setPosition(new Position(0, 0));
 		manager.getBoard().setElementAt(0, 0, player);
@@ -610,8 +611,7 @@ class GameServiceApplicationTests {
 		String symbol = player.getSymbol();
 		manager.flagElement(symbol, 'r');
 		manager.flagElement(symbol, 'r');
-		Tile tile = (Tile) manager.getBoard().getElementAt(3, 3);
-
+		Tile tile = (Tile) manager.getBoard().getElementAt(0, 1);
 		assertFalse(tile.isFlagged());
 	}
 
