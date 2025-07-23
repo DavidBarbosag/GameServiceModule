@@ -208,3 +208,7 @@ public synchronized boolean flagElement(String playerId, char dir)
 
 ## Class Diagram
 ![GameServiceCD.png](assets/GameServiceCD.png)
+
+## Static Analysis
+
+![img.png](assets/jacoco.png)
